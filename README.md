@@ -60,6 +60,13 @@ Home Assistant setup does not pair or reset the scale. Use **Reconfigure** if
 its keys change. Home Assistant stores the keys in the config entry, so protect
 its `.storage` directory and backups.
 
+Use **Configure** on the integration to adjust operational options per scale:
+the number of failed authenticated measurement frames before a bindkey repair
+is raised (default 5), the minimum time between active GATT attempts (15 s),
+the GATT response timeout (8 s), and the CMTP notification wait (5 s).
+Changing an option reloads the integration. The MiBeacon/CMTP identifiers and
+frame constants are protocol-defined and are not user settings.
+
 The 50 and 250 kHz impedance labels are inferred from frame order and values;
 electrode frequencies have not been measured directly. Body composition
 percentages are not calculated from unverified formulas. A new weighing clears

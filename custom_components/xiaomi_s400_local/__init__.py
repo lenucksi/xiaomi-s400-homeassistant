@@ -7,7 +7,19 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CONF_BINDKEY, CONF_TOKEN, DOMAIN
+from .const import (
+    CONF_ACTIVE_RETRY_INTERVAL,
+    CONF_BINDKEY,
+    CONF_CMTP_WAIT_TIMEOUT,
+    CONF_FAILURE_THRESHOLD,
+    CONF_GATT_TIMEOUT,
+    CONF_TOKEN,
+    DEFAULT_ACTIVE_RETRY_INTERVAL,
+    DEFAULT_CMTP_WAIT_TIMEOUT,
+    DEFAULT_FAILURE_THRESHOLD,
+    DEFAULT_GATT_TIMEOUT,
+    DOMAIN,
+)
 from .coordinator import S400Coordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
@@ -24,6 +36,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: S400ConfigEntry) -> bool
         bytes.fromhex(entry.data[CONF_BINDKEY]),
         bytes.fromhex(token_hex) if token_hex else None,
         entry.entry_id,
+        failure_threshold=entry.options.get(
+            CONF_FAILURE_THRESHOLD, DEFAULT_FAILURE_THRESHOLD
+        ),
+        active_retry_interval=entry.options.get(
+            CONF_ACTIVE_RETRY_INTERVAL, DEFAULT_ACTIVE_RETRY_INTERVAL
+        ),
+        gatt_timeout=entry.options.get(CONF_GATT_TIMEOUT, DEFAULT_GATT_TIMEOUT),
+        cmtp_wait_timeout=entry.options.get(
+            CONF_CMTP_WAIT_TIMEOUT, DEFAULT_CMTP_WAIT_TIMEOUT
+        ),
     )
     entry.runtime_data = coordinator
     coordinator.start()

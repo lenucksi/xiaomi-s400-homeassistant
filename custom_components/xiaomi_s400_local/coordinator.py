@@ -25,15 +25,19 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 
 from .active import CmtpFrames, decode_cmtp
-from .const import DOMAIN, MIBEACON_UUID
+from .const import (
+    DEFAULT_ACTIVE_RETRY_INTERVAL,
+    DEFAULT_CMTP_WAIT_TIMEOUT,
+    DEFAULT_FAILURE_THRESHOLD,
+    DEFAULT_GATT_TIMEOUT,
+    DOMAIN,
+    MIBEACON_UUID,
+)
 from .pairing import _GattTransport, _login
 from .parser import AdvertisementError, parse_mibeacon
 from .protocol import CMTP, RCV_OK, RCV_RDY
 
 _LOGGER = logging.getLogger(__name__)
-
-# Number of consecutive decoding failures before a repair issue is raised.
-_FAILURE_THRESHOLD = 5
 
 
 class S400Coordinator:
@@ -46,12 +50,21 @@ class S400Coordinator:
         bindkey: bytes,
         token: bytes | None = None,
         entry_id: str | None = None,
+        *,
+        failure_threshold: int = DEFAULT_FAILURE_THRESHOLD,
+        active_retry_interval: float = DEFAULT_ACTIVE_RETRY_INTERVAL,
+        gatt_timeout: float = DEFAULT_GATT_TIMEOUT,
+        cmtp_wait_timeout: float = DEFAULT_CMTP_WAIT_TIMEOUT,
     ) -> None:
         self.hass = hass
         self.address = address.upper()
         self.bindkey = bindkey
         self.token = token
         self.entry_id = entry_id
+        self.failure_threshold = failure_threshold
+        self.active_retry_interval = active_retry_interval
+        self.gatt_timeout = gatt_timeout
+        self.cmtp_wait_timeout = cmtp_wait_timeout
         self.values: dict[str, Any] = {
             "weight": None,
             "heart_rate": None,
@@ -69,7 +82,7 @@ class S400Coordinator:
         self._listeners: set[Callable[[], None]] = set()
         self._cancel: CALLBACK_TYPE | None = None
         self._active_task: Task[None] | None = None
-        self._last_active_attempt = 0.0
+        self._last_active_attempt = -float("inf")
         self.last_error: str | None = None
         self._consecutive_failures = 0
 
@@ -110,7 +123,7 @@ class S400Coordinator:
         """Count only authenticated measurement frames with a bad tag."""
         self._note_error(err)
         self._consecutive_failures += 1
-        if self.entry_id and self._consecutive_failures == _FAILURE_THRESHOLD:
+        if self.entry_id and self._consecutive_failures == self.failure_threshold:
             self._create_repair_issue()
 
     def _clear_error(self) -> None:
@@ -226,7 +239,7 @@ class S400Coordinator:
         if not self.token or (self._active_task and not self._active_task.done()):
             return
         now = time.monotonic()
-        if now - self._last_active_attempt < 15:
+        if now - self._last_active_attempt < self.active_retry_interval:
             return
         self._last_active_attempt = now
         self._active_task = self.hass.async_create_task(
@@ -247,7 +260,7 @@ class S400Coordinator:
                 device,
                 f"Xiaomi S400 {self.address}",
             )
-            transport = _GattTransport(client, _NoTrace(), timeout=8.0)
+            transport = _GattTransport(client, _NoTrace(), timeout=self.gatt_timeout)
             await transport.start_official_order()
             await transport.official_init()
             await transport.finish_subscriptions()
@@ -259,7 +272,7 @@ class S400Coordinator:
             queue = transport.queues[CMTP]
             while client.is_connected:
                 try:
-                    data = await wait_for(queue.get(), timeout=5.0)
+                    data = await wait_for(queue.get(), timeout=self.cmtp_wait_timeout)
                 except TimeoutError:
                     continue
                 if len(data) >= 6 and data[:3] == b"\x00\x00\x00":

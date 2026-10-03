@@ -56,9 +56,12 @@ def flow_module(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     components.bluetooth = bluetooth
     ha.components = components
     entries.ConfigFlow = ConfigFlow
+    entries.ConfigEntry = object
     entries.ConfigFlowResult = dict
+    entries.OptionsFlowWithReload = type("OptionsFlowWithReload", (), {})
     constants.CONF_ADDRESS = "address"
     core.HomeAssistant = object
+    core.callback = lambda func: func
     for name, module in (
         ("homeassistant", ha),
         ("homeassistant.components", components),

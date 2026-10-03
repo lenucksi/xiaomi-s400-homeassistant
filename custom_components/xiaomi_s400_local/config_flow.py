@@ -6,13 +6,26 @@ from typing import Any
 
 import probatio
 from homeassistant.components import bluetooth
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import CONF_ADDRESS
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 
 from .const import (
+    CONF_ACTIVE_RETRY_INTERVAL,
     CONF_BINDKEY,
+    CONF_CMTP_WAIT_TIMEOUT,
+    CONF_FAILURE_THRESHOLD,
+    CONF_GATT_TIMEOUT,
     CONF_TOKEN,
+    DEFAULT_ACTIVE_RETRY_INTERVAL,
+    DEFAULT_CMTP_WAIT_TIMEOUT,
+    DEFAULT_FAILURE_THRESHOLD,
+    DEFAULT_GATT_TIMEOUT,
     DOMAIN,
     MIBEACON_UUID,
     S400_PRODUCT_IDS,
@@ -51,6 +64,12 @@ class S400ConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configure the local FE95 and GATT credentials without cloud access."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> S400OptionsFlow:
+        """Create the performance and repair-tuning options flow."""
+        return S400OptionsFlow()
 
     def __init__(self) -> None:
         self._address: str | None = None
@@ -167,4 +186,53 @@ class S400ConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+        )
+
+
+class S400OptionsFlow(OptionsFlowWithReload):
+    """Configure operational timeouts and repair sensitivity per scale."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show current values and save validated options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        options = self.config_entry.options
+        return self.async_show_form(
+            step_id="init",
+            data_schema=probatio.Schema(  # type: ignore[arg-type]
+                {
+                    probatio.Required(
+                        CONF_FAILURE_THRESHOLD,
+                        default=options.get(
+                            CONF_FAILURE_THRESHOLD, DEFAULT_FAILURE_THRESHOLD
+                        ),
+                    ): probatio.All(int, probatio.Range(min=1, max=20)),
+                    probatio.Required(
+                        CONF_ACTIVE_RETRY_INTERVAL,
+                        default=options.get(
+                            CONF_ACTIVE_RETRY_INTERVAL,
+                            DEFAULT_ACTIVE_RETRY_INTERVAL,
+                        ),
+                    ): probatio.All(
+                        probatio.Coerce(float), probatio.Range(min=1, max=300)
+                    ),
+                    probatio.Required(
+                        CONF_GATT_TIMEOUT,
+                        default=options.get(CONF_GATT_TIMEOUT, DEFAULT_GATT_TIMEOUT),
+                    ): probatio.All(
+                        probatio.Coerce(float), probatio.Range(min=1, max=60)
+                    ),
+                    probatio.Required(
+                        CONF_CMTP_WAIT_TIMEOUT,
+                        default=options.get(
+                            CONF_CMTP_WAIT_TIMEOUT, DEFAULT_CMTP_WAIT_TIMEOUT
+                        ),
+                    ): probatio.All(
+                        probatio.Coerce(float), probatio.Range(min=0.5, max=30)
+                    ),
+                }
+            ),
         )

@@ -42,12 +42,14 @@ def _service_info(raw: bytes) -> SimpleNamespace:
     return SimpleNamespace(service_data={MIBEACON_UUID: raw}, rssi=-70)
 
 
-def _coordinator(hass: HomeAssistant, token: bytes | None = None) -> S400Coordinator:
+def _coordinator(
+    hass: HomeAssistant, token: bytes | None = None, **options: int | float
+) -> S400Coordinator:
     with patch(
         "custom_components.xiaomi_s400_local.coordinator.bluetooth.async_register_callback",
         return_value=lambda: None,
     ):
-        coordinator = S400Coordinator(hass, ADDRESS, BINDKEY, token)
+        coordinator = S400Coordinator(hass, ADDRESS, BINDKEY, token, **options)
         coordinator.start()
     return coordinator
 
@@ -110,6 +112,28 @@ async def test_active_session_throttled(hass: HomeAssistant) -> None:
     with patch.object(coordinator, "_active_session", new=AsyncMock()):
         coordinator._start_active_session()
         coordinator._start_active_session()  # within the throttle window
+
+
+async def test_active_retry_interval_is_configurable(hass: HomeAssistant) -> None:
+    coordinator = _coordinator(hass, token=bytes(12), active_retry_interval=30.0)
+    attempts: list[str] = []
+
+    def schedule(coroutine, name: str):
+        coroutine.close()
+        attempts.append(name)
+        return SimpleNamespace(done=lambda: True)
+
+    with (
+        patch(
+            "custom_components.xiaomi_s400_local.coordinator.time.monotonic",
+            side_effect=[0.1, 10.1, 31.1],
+        ),
+        patch.object(hass, "async_create_task", side_effect=schedule),
+    ):
+        coordinator._start_active_session()
+        coordinator._start_active_session()
+        coordinator._start_active_session()
+    assert len(attempts) == 2
 
 
 async def test_active_session_without_connectable_device(hass: HomeAssistant) -> None:
@@ -269,6 +293,20 @@ async def test_repeated_failures_raise_and_clear_repair_issue(
 
     coordinator._advertisement(_service_info(_frame(mass=500, hr=0, imp=0)), None)
     assert key not in ir.async_get(hass).issues
+
+
+async def test_custom_failure_threshold(hass: HomeAssistant) -> None:
+    """Repair sensitivity comes from the configured coordinator, not a constant."""
+    from homeassistant.helpers import issue_registry as ir
+
+    coordinator = _coordinator(hass, failure_threshold=2)
+    coordinator.entry_id = "01TESTENTRY"
+    key = (DOMAIN, coordinator._issue_id())
+    bad = bytes.fromhex("5858d9302a") + _EMBEDDED_MAC + bytes(15)
+    coordinator._advertisement(_service_info(bad), None)
+    assert key not in ir.async_get(hass).issues
+    coordinator._advertisement(_service_info(bad), None)
+    assert key in ir.async_get(hass).issues
 
 
 async def test_new_weighing_clears_previous_persons_metrics(
