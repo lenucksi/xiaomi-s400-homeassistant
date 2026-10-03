@@ -32,6 +32,16 @@ async def test_invalid_bindkey_repair_flow(hass: HomeAssistant) -> None:
     assert entry.data["bindkey"] == "00" * 16
 
     with patch.object(
+        hass.config_entries, "async_reload", new=AsyncMock(return_value=False)
+    ):
+        result = await flow.async_step_credentials(
+            {"bindkey": "ab" * 16, "token": "cd" * 12}
+        )
+    assert result["type"] == "form"
+    assert result["errors"] == {"base": "reload_failed"}
+    assert entry.data["bindkey"] == "ab" * 16
+
+    with patch.object(
         hass.config_entries, "async_reload", new=AsyncMock(return_value=True)
     ):
         result = await flow.async_step_credentials(

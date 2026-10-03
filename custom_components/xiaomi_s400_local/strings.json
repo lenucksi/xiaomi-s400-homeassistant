@@ -105,7 +105,8 @@
   },
   "fix_flow": {
     "error": {
-      "invalid_key": "Bindkey must be 32 hex characters and token, when supplied, 24 hex characters."
+      "invalid_key": "Bindkey must be 32 hex characters and token, when supplied, 24 hex characters.",
+      "reload_failed": "Credentials were saved, but the integration could not be reloaded. Check its logs and reload it manually."
     },
     "abort": {
       "entry_not_found": "The scale configuration no longer exists."

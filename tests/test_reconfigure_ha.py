@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import probatio
+import pytest
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from homeassistant.helpers import config_validation as cv
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -49,6 +50,12 @@ async def test_reconfigure_prefills_and_updates_credentials(
             "default": "bb" * 12,
         },
     ]
+
+    with pytest.raises(InvalidData) as error:
+        await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"bindkey": 42}
+        )
+    assert "bindkey" in error.value.schema_errors
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"bindkey": "cc" * 16, "token": "dd" * 12}

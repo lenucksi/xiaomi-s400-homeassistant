@@ -105,7 +105,8 @@
   },
   "fix_flow": {
     "error": {
-      "invalid_key": "Bindkey musi mieć 32 znaki hex, a opcjonalny token 24 znaki hex."
+      "invalid_key": "Bindkey musi mieć 32 znaki hex, a opcjonalny token 24 znaki hex.",
+      "reload_failed": "Poświadczenia zapisano, ale nie udało się przeładować integracji. Sprawdź jej dziennik i przeładuj ją ręcznie."
     },
     "abort": {
       "entry_not_found": "Konfiguracja wagi już nie istnieje."

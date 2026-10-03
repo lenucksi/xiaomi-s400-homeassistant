@@ -48,8 +48,9 @@ class InvalidBindkeyRepairFlow(RepairsFlow):
                     entry,
                     data={**entry.data, CONF_BINDKEY: bindkey, CONF_TOKEN: token},
                 )
-                await self.hass.config_entries.async_reload(entry.entry_id)
-                return self.async_create_entry(data={})
+                if await self.hass.config_entries.async_reload(entry.entry_id):
+                    return self.async_create_entry(data={})
+                errors["base"] = "reload_failed"
         return self.async_show_form(
             step_id="credentials",
             data_schema=probatio.Schema(  # type: ignore[arg-type]

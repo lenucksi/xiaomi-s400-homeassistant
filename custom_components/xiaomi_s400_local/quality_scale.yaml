@@ -13,7 +13,7 @@ rules:
   config-flow: done
   config-flow-test-coverage:
     status: todo
-    comment: The current config flow has 74% coverage after rebasing onto main.
+    comment: The current config flow has 77% coverage, below the rule threshold.
   dependency-transparency: done
   docs-actions:
     status: exempt
@@ -31,7 +31,9 @@ rules:
   entity-unique-id: done
   has-entity-name: done
   runtime-data: done
-  test-before-configure: done
+  test-before-configure:
+    status: todo
+    comment: The sleepy scale and its bindkey are not verified during the config flow; validation currently waits for a measurement frame.
   test-before-setup:
     status: exempt
     comment: The scale is a passive Bluetooth device; there is no connection to test at setup time.
@@ -53,7 +55,7 @@ rules:
     comment: The integration has no account authentication. The bindkey/token can be changed through the reconfigure flow.
   test-coverage:
     status: todo
-    comment: Total coverage is 94%; setup and coordinator branches need more tests.
+    comment: Total coverage is 94%; config flow, setup and coordinator branches need more tests.
 
   # Gold
   devices: done

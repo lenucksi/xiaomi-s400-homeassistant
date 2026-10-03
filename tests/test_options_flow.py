@@ -7,7 +7,7 @@ from unittest.mock import patch
 import probatio
 import pytest
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.xiaomi_s400_local.const import (
@@ -111,3 +111,6 @@ async def test_options_schema_rejects_out_of_range_values(
     options[key] = invalid
     with pytest.raises(probatio.Invalid):
         schema(options)
+    with pytest.raises(InvalidData) as error:
+        await hass.config_entries.options.async_configure(result["flow_id"], options)
+    assert key in error.value.schema_errors

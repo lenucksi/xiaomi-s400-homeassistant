@@ -19,6 +19,9 @@ Requires Home Assistant 2026.9.4 or newer.
 > local login with the token. The first bind requires a one-time credential
 > signature from Xiaomi; afterwards data reception and GATT logins are local.
 > The purely local provisioner still supports only the older auth version 1.
+> Token login was verified on hardware, but a complete CMTP measurement frame
+> and a barefoot measurement through the heart-rate stage have not yet been
+> captured from this scale.
 > Detailed evidence, compatibility limits and the Bluetooth-free analysis are in
 > [AUTH_V2.md](research/AUTH_V2.md). The
 > [analysis of the official Mi Home APK](research/MIHOME_V2.md) independently
@@ -37,8 +40,8 @@ Requires Home Assistant 2026.9.4 or newer.
   registration response and a successful login;
 - MiBeacon v4/v5 decryption and entities: weight, heart rate, 50 kHz impedance,
   250 kHz impedance, user profile, stabilization and RSSI;
-- automatic connection when the scale wakes, token login and local reception of
-  live and final measurements from the encrypted CMTP channel;
+- an experimental active path that connects when the scale wakes, logs in with
+  the token and decodes live and final measurements from encrypted CMTP frames;
 - redaction of secrets from Home Assistant diagnostics;
 - self-contained GATT trace and pairing tools for Raspberry Pi OS/Debian.
 
@@ -86,9 +89,8 @@ paired — so it has to be read from your Xiaomi account:
 1. Add the scale to the **Xiaomi Home** app and weigh yourself once. This mints
    the bindkey.
 2. Run the [Xiaomi Cloud Tokens Extractor](https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor)
-  using the extractor's current installation instructions. Log in with the Xiaomi account: QR login,
-   e-mail/password, 2FA and captcha are supported interactively, so 2FA is not a
-   blocker. Pick your region (e.g. `de` for Europe).
+   using its current installation instructions. Log in to your Xiaomi account
+   and select the account region (for example, `de` for Europe).
 3. Find the S400 in the output and copy:
    - **`BLE KEY`** — the 16-byte bindkey (32 hex characters). **Required.**
    - **`TOKEN`** — the 12-byte login token (24 hex characters). Optional; only
@@ -273,13 +275,15 @@ mode) for that.
 
 ## How data is updated
 
-The integration is push-based (`iot_class: local_push`). It listens for the
-scale's encrypted MiBeacon advertisements and updates the entities as frames
-arrive. A barefoot weigh-in produces two measurement frames (weight + 50 kHz
-impedance + heart rate, then 250 kHz impedance). If a 12-byte login token is
-configured, an authenticated GATT session is also consumed for live and final
-measurements. Values are restored after a Home Assistant restart. There is no
-polling and no cloud connection.
+The integration is push-based (`iot_class: local_push`). It listens for
+encrypted MiBeacon advertisements and updates entities when measurement
+objects arrive. The parser supports the documented weight/50 kHz
+impedance/heart-rate frame and the later 250 kHz impedance frame, but this full
+sequence still needs validation on this scale. With a 12-byte login token,
+the integration also attempts an authenticated GATT session and decodes CMTP
+notifications; token login has been confirmed, but reception of a complete
+measurement notification has not. Values are restored after a Home Assistant
+restart. There is no polling or cloud connection in the integration.
 
 ## Use cases
 
@@ -318,9 +322,10 @@ Both credentials can be updated later through **Reconfigure** on the config entr
 
 ## Troubleshooting
 
-- **No entities / only signal strength** — the scale has not been paired in the
-  Xiaomi Home app yet, so it never minted a bindkey. Pair it once, extract the
-  bindkey, then add the integration.
+- **No entities / no measurements** — check that the integration loaded, the
+  scale is awake and within Bluetooth range, and the bindkey matches its
+  current Xiaomi Home pairing. Signal strength alone does not prove that an
+  encrypted measurement frame was received.
 - **No data while the phone app is open** — the app holds the GATT connection
   and the scale stops broadcasting. Close the app (or its Bluetooth) while
   weighing.
