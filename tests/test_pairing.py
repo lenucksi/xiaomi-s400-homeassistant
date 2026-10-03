@@ -173,7 +173,7 @@ def test_new_did_and_product_id() -> None:
 
 def test_save_credentials(tmp_path: Path) -> None:
     result = pairing.PairingResult(
-        mac="04:AE:47:5C:FC:29",
+        mac="02:00:00:00:00:03",
         product_id="0x30D9",
         did="blt.3.1abc",
         did_hex="00" * 20,
@@ -270,12 +270,12 @@ async def test_login_rejects_wrong_token() -> None:
 async def test_find_s400_scans_and_matches() -> None:
     from unittest.mock import patch as _patch
 
-    device = type("Dev", (), {"address": "04:AE:47:5C:FC:29"})()
+    device = type("Dev", (), {"address": "02:00:00:00:00:03"})()
     with _patch(
         "custom_components.xiaomi_s400_local.pairing.BleakScanner.find_device_by_filter",
         return_value=device,
     ) as finder:
-        found, _pid = await pairing.find_s400(address="04:AE:47:5C:FC:29")
+        found, _pid = await pairing.find_s400(address="02:00:00:00:00:03")
         assert found is device
         matcher = finder.call_args.args[0]
         adv = type(
@@ -319,11 +319,11 @@ async def test_pair_device_v1_success() -> None:
         ),
     ):
         result = await pairing.pair_device(
-            ble_device=type("Dev", (), {"address": "04:AE:47:5C:FC:29"})(),
+            ble_device=type("Dev", (), {"address": "02:00:00:00:00:03"})(),
             product_id=0x30D9,
             official_init=True,
         )
-    assert result.mac == "04:AE:47:5C:FC:29"
+    assert result.mac == "02:00:00:00:00:03"
     assert len(result.bindkey) == 32
     assert len(result.token) == 24
 
@@ -349,7 +349,7 @@ async def test_pair_device_v2_is_unsupported() -> None:
         pytest.raises(pairing.RegistrationUnsupported),
     ):
         await pairing.pair_device(
-            ble_device=type("Dev", (), {"address": "04:AE:47:5C:FC:29"})(),
+            ble_device=type("Dev", (), {"address": "02:00:00:00:00:03"})(),
             product_id=0x30D9,
             official_init=True,
         )
@@ -429,7 +429,7 @@ async def test_pair_device_by_address_and_without_official_init() -> None:
 
     _, device_pub = generate_keypair()
     fake_transport = FakeTransport(device_pub)
-    device = type("Dev", (), {"address": "04:AE:47:5C:FC:29"})()
+    device = type("Dev", (), {"address": "02:00:00:00:00:03"})()
     with (
         _patch(
             "custom_components.xiaomi_s400_local.pairing.find_s400",
@@ -448,7 +448,7 @@ async def test_pair_device_by_address_and_without_official_init() -> None:
         ),
     ):
         result = await pairing.pair_device(
-            address="04:AE:47:5C:FC:29", official_init=False
+            address="02:00:00:00:00:03", official_init=False
         )
     assert result.product_id == "0x30D9"
 
@@ -469,7 +469,7 @@ async def test_pair_device_rejects_bad_did() -> None:
         pytest.raises(pairing.PairingError),
     ):
         await pairing.pair_device(
-            ble_device=type("Dev", (), {"address": "04:AE:47:5C:FC:29"})(),
+            ble_device=type("Dev", (), {"address": "02:00:00:00:00:03"})(),
             did=bytes(10),
         )
 
@@ -479,12 +479,12 @@ async def test_find_s400_matcher_branches() -> None:
 
     from custom_components.xiaomi_s400_local.const import MIBEACON_UUID
 
-    device = type("Dev", (), {"address": "04:AE:47:5C:FC:29", "name": None})()
+    device = type("Dev", (), {"address": "02:00:00:00:00:03", "name": None})()
     with _patch(
         "custom_components.xiaomi_s400_local.pairing.BleakScanner.find_device_by_filter",
         return_value=device,
     ) as finder:
-        await pairing.find_s400(address="04:AE:47:5C:FC:29")
+        await pairing.find_s400(address="02:00:00:00:00:03")
         matcher = finder.call_args.args[0]
         adv = type(
             "Adv",
@@ -496,7 +496,7 @@ async def test_find_s400_matcher_branches() -> None:
             },
         )()
         assert matcher(device, adv) is True
-        other = type("Dev", (), {"address": "AA:BB:CC:DD:EE:FF", "name": None})()
+        other = type("Dev", (), {"address": "02:00:00:00:00:05", "name": None})()
         assert matcher(other, adv) is False
 
     with _patch(
@@ -594,7 +594,7 @@ async def test_official_init_device_info_timeout() -> None:
 
 def test_pairing_result_is_frozen() -> None:
     result = pairing.PairingResult(
-        mac="04:AE:47:5C:FC:29",
+        mac="02:00:00:00:00:03",
         product_id=None,
         did="blt.3.1abc",
         did_hex="00" * 20,

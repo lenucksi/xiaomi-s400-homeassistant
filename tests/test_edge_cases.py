@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESCCM
 from custom_components.xiaomi_s400_local import active, crypto, parser
 
 KEY = bytes.fromhex("00112233445566778899aabbccddeeff")
-MAC = bytes.fromhex("04ae475cfc29")
+MAC = bytes.fromhex("020000000003")
 EMB = MAC[::-1]
 
 
@@ -47,40 +47,40 @@ def test_parser_rejects_bad_address() -> None:
 
 def test_parser_rejects_bad_bindkey_and_short_data() -> None:
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", b"\x00" * 20, bytes(8))
+        parser.parse_mibeacon("02:00:00:00:00:03", b"\x00" * 20, bytes(8))
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", b"\x00\x00", KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", b"\x00\x00", KEY)
 
 
 def test_parser_rejects_unknown_product_and_version() -> None:
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", frame(b"", pid=0x0000), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", frame(b"", pid=0x0000), KEY)
     # version 3 in the frame control high nibble
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", frame(b"", fc=0x3858), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", frame(b"", fc=0x3858), KEY)
 
 
 def test_parser_rejects_mac_mismatch_and_truncation() -> None:
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", frame(b"", embedded=bytes(6)), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", frame(b"", embedded=bytes(6)), KEY)
     # MAC flag set (fc 0x5010 little-endian) but no room for the MAC field
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", bytes.fromhex("1050d9302a"), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", bytes.fromhex("1050d9302a"), KEY)
 
 
 def test_parser_capability_and_no_object() -> None:
     # Capability flag set (fc 0x5020) but no capability byte present
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", bytes.fromhex("2050d9302a"), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", bytes.fromhex("2050d9302a"), KEY)
 
     # Capability byte with the 0x20 sub-flag, no object -> returns the base frame
     data = bytes.fromhex("2050d9302a") + bytes([0x20, 0x00])
-    result = parser.parse_mibeacon("04:AE:47:5C:FC:29", data, KEY)
+    result = parser.parse_mibeacon("02:00:00:00:00:03", data, KEY)
     assert result.weight is None
 
     # No object flag at all -> returns the base frame
     base = parser.parse_mibeacon(
-        "04:AE:47:5C:FC:29", bytes.fromhex("0050d9302a00"), KEY
+        "02:00:00:00:00:03", bytes.fromhex("0050d9302a00"), KEY
     )
     assert base.product_id == 0x30D9
 
@@ -89,26 +89,26 @@ def test_parser_rejects_truncated_object_and_short_encryption() -> None:
     # Declared object length (9) exceeds the available payload bytes
     with pytest.raises(parser.AdvertisementError):
         parser.parse_mibeacon(
-            "04:AE:47:5C:FC:29", frame(b"\x16\x6e\x09" + bytes(5)), KEY
+            "02:00:00:00:00:03", frame(b"\x16\x6e\x09" + bytes(5)), KEY
         )
 
     # Encrypted payload shorter than nonce + tag
     with pytest.raises(parser.AdvertisementError):
         parser.parse_mibeacon(
-            "04:AE:47:5C:FC:29", bytes.fromhex("5858d9302a") + EMB + b"\x00\x00", KEY
+            "02:00:00:00:00:03", bytes.fromhex("5858d9302a") + EMB + b"\x00\x00", KEY
         )
 
 
 def test_parser_rejects_bad_object_lengths() -> None:
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", frame(obj(0x6E16, bytes(8))), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", frame(obj(0x6E16, bytes(8))), KEY)
     with pytest.raises(parser.AdvertisementError):
-        parser.parse_mibeacon("04:AE:47:5C:FC:29", frame(obj(0x6E16, bytes(12))), KEY)
+        parser.parse_mibeacon("02:00:00:00:00:03", frame(obj(0x6E16, bytes(12))), KEY)
 
 
 def test_parser_ignores_unknown_objects() -> None:
     result = parser.parse_mibeacon(
-        "04:AE:47:5C:FC:29", frame(obj(0x1234, b"\x01\x02")), KEY
+        "02:00:00:00:00:03", frame(obj(0x1234, b"\x01\x02")), KEY
     )
     assert result.weight is None
 
@@ -121,7 +121,7 @@ def test_parser_unencrypted_payload() -> None:
         + bytes.fromhex("d9302a")
         + obj(0x6E16, measurement(mass=1001, hr=31, imp=4620))
     )
-    result = parser.parse_mibeacon("04:AE:47:5C:FC:29", data, KEY)
+    result = parser.parse_mibeacon("02:00:00:00:00:03", data, KEY)
     assert result.weight == 100.1
 
 

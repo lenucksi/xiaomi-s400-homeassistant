@@ -157,7 +157,7 @@ def test_bind_response_decodes_production_field_shapes() -> None:
         did="blt.3.fixture",
         token_hex="00" * 12,
         bindkey_hex="11" * 16,
-        smac="00:11:22:33:44:55",
+        smac="02:00:00:00:00:02",
     )
 
     assert result.certificate_der == certificate

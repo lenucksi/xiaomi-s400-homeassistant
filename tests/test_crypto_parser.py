@@ -50,11 +50,11 @@ def test_setup_ecdh_derives_identical_secrets_and_encrypts_did() -> None:
 
 
 def test_parse_encrypted_s400_object() -> None:
-    address = "84:46:93:20:07:0A"
+    address = "02:00:00:00:00:04"
     bindkey = bytes.fromhex("00112233445566778899aabbccddeeff")
     frame_control = 0x5858  # v5, registered, object, MAC and encryption
     prefix = frame_control.to_bytes(2, "little") + bytes.fromhex("d9302a")
-    embedded_mac = bytes.fromhex("0a0720934684")
+    embedded_mac = bytes.fromhex("040000000002")
     packed = 736 | ((101 - 50) << 11) | (5106 << 18)
     payload = (
         bytes.fromhex("166e09")
@@ -78,9 +78,9 @@ def test_parse_encrypted_s400_object() -> None:
 
 
 def test_parse_rejects_wrong_bindkey() -> None:
-    address = "84:46:93:20:07:0A"
+    address = "02:00:00:00:00:04"
     prefix = (0x5858).to_bytes(2, "little") + bytes.fromhex("d9302a")
-    embedded_mac = bytes.fromhex("0a0720934684")
+    embedded_mac = bytes.fromhex("040000000002")
     payload = bytes.fromhex("166e09") + bytes(9)
     counter = bytes.fromhex("010203")
     good_key = bytes.fromhex("00112233445566778899aabbccddeeff")

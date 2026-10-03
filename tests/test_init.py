@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from homeassistant.core import HomeAssistant
@@ -9,7 +10,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.xiaomi_s400_local.const import DOMAIN
 
-ADDRESS = "04:AE:47:5C:FC:29"
+ADDRESS = "02:00:00:00:00:03"
 
 
 def _entry(**data) -> MockConfigEntry:
@@ -117,4 +118,7 @@ async def test_remove_stale_device_returns_true(hass: HomeAssistant) -> None:
             async_remove_config_entry_device,
         )
 
-        assert await async_remove_config_entry_device(hass, entry, None)
+        current = SimpleNamespace(identifiers={(DOMAIN, ADDRESS)})
+        stale = SimpleNamespace(identifiers={(DOMAIN, "02:00:00:00:00:04")})
+        assert not await async_remove_config_entry_device(hass, entry, current)
+        assert await async_remove_config_entry_device(hass, entry, stale)

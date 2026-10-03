@@ -13,6 +13,7 @@ import asyncio
 import getpass
 import json
 import os
+import re
 import sys
 import tempfile
 from datetime import UTC, datetime
@@ -334,7 +335,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model", default="yunmai.scales.ms104", help="Mi Home model identifier"
     )
-    parser.add_argument("--address", help="BLE MAC; omit to discover by S400 PID")
     parser.add_argument(
         "--trace", type=Path, default=Path("captures/s400-xiaomi-pair.jsonl")
     )
@@ -364,7 +364,11 @@ def parse_args() -> argparse.Namespace:
         "--browser-cdp",
         help="use an already authenticated Chromium/Edge CDP session",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.address = os.environ.get("S400_BLE_ADDRESS", "").strip().upper()
+    if not re.fullmatch(r"[0-9A-F]{2}(?::[0-9A-F]{2}){5}", args.address):
+        parser.error("set S400_BLE_ADDRESS to a six-byte colon-separated BLE address")
+    return args
 
 
 def main() -> int:

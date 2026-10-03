@@ -7,6 +7,7 @@ import sys
 from importlib import import_module
 from types import ModuleType, SimpleNamespace
 
+import probatio
 import pytest
 from test_crypto_parser import PACKAGE
 
@@ -19,7 +20,6 @@ def flow_module(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     entries = ModuleType("homeassistant.config_entries")
     constants = ModuleType("homeassistant.const")
     core = ModuleType("homeassistant.core")
-    vol = ModuleType("voluptuous")
 
     class ConfigFlow:
         def __init_subclass__(cls, **kwargs):
@@ -52,17 +52,6 @@ def flow_module(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
         def _set_confirm_only(self):
             pass
 
-    class Marker:
-        def __init__(self, name, **kwargs):
-            self.name = name
-
-        def __hash__(self):
-            return hash(self.name)
-
-    class Schema:
-        def __init__(self, schema):
-            self.schema = schema
-
     bluetooth.async_discovered_service_info = lambda hass, connectable: []
     components.bluetooth = bluetooth
     ha.components = components
@@ -70,9 +59,6 @@ def flow_module(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     entries.ConfigFlowResult = dict
     constants.CONF_ADDRESS = "address"
     core.HomeAssistant = object
-    vol.Required = Marker
-    vol.Optional = Marker
-    vol.Schema = Schema
     for name, module in (
         ("homeassistant", ha),
         ("homeassistant.components", components),
@@ -80,7 +66,6 @@ def flow_module(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
         ("homeassistant.config_entries", entries),
         ("homeassistant.const", constants),
         ("homeassistant.core", core),
-        ("voluptuous", vol),
     ):
         monkeypatch.setitem(sys.modules, name, module)
     monkeypatch.setitem(sys.modules, PACKAGE.__name__, PACKAGE)
@@ -94,11 +79,12 @@ def test_user_setup_only_imports_existing_keys(flow_module: ModuleType) -> None:
     flow.hass = object()
     initial = asyncio.run(flow.async_step_user())
     assert initial["step_id"] == "user"
-    assert [field.name for field in initial["data_schema"].schema] == ["address"]
+    assert isinstance(initial["data_schema"], probatio.Schema)
+    assert [field.schema for field in initial["data_schema"].schema] == ["address"]
 
-    keys = asyncio.run(flow.async_step_user({"address": "aa-bb-cc-dd-ee-ff"}))
+    keys = asyncio.run(flow.async_step_user({"address": "02-00-00-00-00-05"}))
     assert keys["step_id"] == "keys"
-    assert [field.name for field in keys["data_schema"].schema] == [
+    assert [field.schema for field in keys["data_schema"].schema] == [
         "bindkey",
         "token",
     ]
@@ -106,7 +92,7 @@ def test_user_setup_only_imports_existing_keys(flow_module: ModuleType) -> None:
         flow.async_step_keys({"bindkey": "AA" * 16, "token": "BB" * 12})
     )
     assert entry["data"] == {
-        "address": "AA:BB:CC:DD:EE:FF",
+        "address": "02:00:00:00:00:05",
         "bindkey": "aa" * 16,
         "token": "bb" * 12,
     }
@@ -115,7 +101,7 @@ def test_user_setup_only_imports_existing_keys(flow_module: ModuleType) -> None:
 def test_reconfigure_reloads_existing_entry(flow_module: ModuleType) -> None:
     flow = flow_module.S400ConfigFlow()
     flow._entry = SimpleNamespace(
-        unique_id="AA:BB:CC:DD:EE:FF", data={"bindkey": "aa" * 16}
+        unique_id="02:00:00:00:00:05", data={"bindkey": "aa" * 16}
     )
     invalid = asyncio.run(flow.async_step_reconfigure({"bindkey": "wrong"}))
     assert invalid["errors"] == {"base": "invalid_key"}

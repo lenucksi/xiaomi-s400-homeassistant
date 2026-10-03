@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CONF_BINDKEY, CONF_TOKEN
+from .const import CONF_BINDKEY, CONF_TOKEN, DOMAIN
 from .coordinator import S400Coordinator
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
@@ -48,9 +48,5 @@ async def async_remove_config_entry_device(
     entry: S400ConfigEntry,
     device_entry: DeviceEntry,
 ) -> bool:
-    """Allow removing a stale device from the config entry.
-
-    The S400 advertises a single device per config entry, and the coordinator
-    keeps no per-device state, so removal is always safe.
-    """
-    return True
+    """Allow removing stale devices, but retain the configured scale."""
+    return (DOMAIN, entry.data["address"].upper()) not in device_entry.identifiers

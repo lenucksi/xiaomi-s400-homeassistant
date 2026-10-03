@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import voluptuous as vol
+import probatio
 from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_ADDRESS
@@ -18,6 +18,9 @@ from .const import (
     S400_PRODUCT_IDS,
 )
 from .pairing import product_id_from_service_data
+
+# HA 2026.9's form type hints still name voluptuous, although its runtime
+# serializer and validator accept probatio.Schema (covered by flow tests).
 
 
 def _normalise_hex(value: str, byte_length: int) -> str:
@@ -68,13 +71,13 @@ class S400ConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_keys()
         choices = _discovered(self.hass)
         address_field = (
-            vol.Required(CONF_ADDRESS, default=next(iter(choices)))
+            probatio.Required(CONF_ADDRESS, default=next(iter(choices)))
             if choices
-            else vol.Required(CONF_ADDRESS)
+            else probatio.Required(CONF_ADDRESS)
         )
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({address_field: str}),
+            data_schema=probatio.Schema({address_field: str}),  # type: ignore[arg-type]
             errors=errors,
         )
 
@@ -102,10 +105,10 @@ class S400ConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
         return self.async_show_form(
             step_id="keys",
-            data_schema=vol.Schema(
+            data_schema=probatio.Schema(  # type: ignore[arg-type]
                 {
-                    vol.Required(CONF_BINDKEY): str,
-                    vol.Optional(CONF_TOKEN): str,
+                    probatio.Required(CONF_BINDKEY): str,
+                    probatio.Optional(CONF_TOKEN): str,
                 }
             ),
             errors=errors,
@@ -153,12 +156,12 @@ class S400ConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
         return self.async_show_form(
             step_id="reconfigure",
-            data_schema=vol.Schema(
+            data_schema=probatio.Schema(  # type: ignore[arg-type]
                 {
-                    vol.Required(
+                    probatio.Required(
                         CONF_BINDKEY, default=entry.data.get(CONF_BINDKEY, "")
                     ): str,
-                    vol.Optional(
+                    probatio.Optional(
                         CONF_TOKEN, default=entry.data.get(CONF_TOKEN, "")
                     ): str,
                 }

@@ -12,6 +12,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -49,7 +50,7 @@ def product_id(data: bytes | None) -> int | None:
     return int.from_bytes(data[2:4], "little") if data and len(data) >= 4 else None
 
 
-async def locate(address: str | None, scan_timeout: float, trace: JsonlTrace):
+async def locate(address: str, scan_timeout: float, trace: JsonlTrace):
     chosen: tuple[Any, Any] | None = None
 
     def callback(device: Any, adv: Any) -> None:
@@ -59,12 +60,11 @@ async def locate(address: str | None, scan_timeout: float, trace: JsonlTrace):
         matches_address = bool(address and device.address.upper() == address.upper())
         name = (adv.local_name or device.name or "").lower()
         matches_s400 = pid in S400_PRODUCT_IDS or "s400" in name
-        if not matches_address and not matches_s400:
+        if not matches_address:
             return
         services = {key: value.hex() for key, value in adv.service_data.items()}
         trace.write(
             "advertisement",
-            address=device.address,
             name=adv.local_name or device.name,
             rssi=adv.rssi,
             service_uuids=list(adv.service_uuids),
@@ -73,7 +73,7 @@ async def locate(address: str | None, scan_timeout: float, trace: JsonlTrace):
                 str(k): v.hex() for k, v in adv.manufacturer_data.items()
             },
         )
-        if matches_address or not address and matches_s400:
+        if matches_s400:
             chosen = device, adv
 
     async with BleakScanner(detection_callback=callback):
@@ -81,7 +81,7 @@ async def locate(address: str | None, scan_timeout: float, trace: JsonlTrace):
         while chosen is None and asyncio.get_running_loop().time() < deadline:
             await asyncio.sleep(0.1)
     if chosen is None:
-        raise RuntimeError("S400 not found; wake the scale or pass --address")
+        raise RuntimeError("S400 not found; check S400_BLE_ADDRESS and wake the scale")
     return chosen
 
 
@@ -89,17 +89,17 @@ async def run(args: argparse.Namespace) -> None:
     trace = JsonlTrace(args.output)
     subscribed: list[str] = []
     try:
-        trace.write("scan_start", requested_address=args.address)
+        trace.write("scan_start")
         device, advertisement = await locate(args.address, args.scan_timeout, trace)
         pid = product_id(advertisement.service_data.get(MIBEACON_UUID))
-        print(f"Found {device.name or advertisement.local_name}: {device.address}")
+        print(f"Found {device.name or advertisement.local_name or 'S400'}")
         print(
             f"MiBeacon product id: {f'0x{pid:04X}' if pid is not None else 'unknown'}"
         )
-        trace.write("connect_start", address=device.address, product_id=pid)
+        trace.write("connect_start", product_id=pid)
 
         async with BleakClient(device, timeout=args.connect_timeout) as client:
-            trace.write("connected", address=device.address)
+            trace.write("connected")
             print("\nGATT database:")
             for service in client.services:
                 print(f"service {service.uuid}  {service.description}")
@@ -170,9 +170,6 @@ async def run(args: argparse.Namespace) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--address", help="target BLE MAC; otherwise select S400 by MiBeacon PID"
-    )
     parser.add_argument("--output", type=Path, default=Path("s400-gatt-trace.jsonl"))
     parser.add_argument("--scan-timeout", type=float, default=20.0)
     parser.add_argument("--connect-timeout", type=float, default=20.0)
@@ -182,7 +179,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="also read every characteristic marked readable",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.address = os.environ.get("S400_BLE_ADDRESS", "").strip().upper()
+    if not re.fullmatch(r"[0-9A-F]{2}(?::[0-9A-F]{2}){5}", args.address):
+        parser.error("set S400_BLE_ADDRESS to a six-byte colon-separated BLE address")
+    return args
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@
           "token": "Token logowania (24 znaki hex, opcjonalny)"
         },
         "data_description": {
-          "bindkey": "Wyodrębniony jednorazowo za pomocą Xiaomi Cloud Tokens Extractor. Odszyfrowuje reklamy wagi.",
+          "bindkey": "Uzyskaj klucz z Xiaomi Cloud Tokens Extractor po sparowaniu wagi. Służy do odszyfrowywania reklam wagi.",
           "token": "Opcjonalny. Potrzebny tylko do aktywnego strumienia GATT. Pozostaw pusty dla trybu pasywnego."
         }
       },
@@ -40,7 +40,7 @@
           "token": "Token logowania (24 znaki hex, opcjonalny)"
         },
         "data_description": {
-          "bindkey": "Wyodrębniony jednorazowo za pomocą Xiaomi Cloud Tokens Extractor. Odszyfrowuje reklamy wagi.",
+          "bindkey": "Uzyskaj klucz z Xiaomi Cloud Tokens Extractor po sparowaniu wagi. Służy do odszyfrowywania reklam wagi.",
           "token": "Opcjonalny. Potrzebny tylko do aktywnego strumienia GATT. Pozostaw pusty dla trybu pasywnego."
         }
       },
@@ -86,14 +86,24 @@
   "issues": {
     "invalid_bindkey": {
       "title": "Nieprawidłowe poświadczenia Xiaomi S400",
-      "description": "Reklamy z {address} nie dają się już odszyfrować. Wyodrębnij bindkey ponownie i zaktualizuj integrację."
+      "description": "Reklamy z pomiarami urządzenia {address} wielokrotnie nie przeszły uwierzytelnienia. Wpisz bindkey ponownie; jeśli ponownie sparowano wagę, najpierw uzyskaj nowy klucz."
     }
   },
   "fix_flow": {
+    "error": {
+      "invalid_key": "Bindkey musi mieć 32 znaki hex, a opcjonalny token 24 znaki hex."
+    },
+    "abort": {
+      "entry_not_found": "Konfiguracja wagi już nie istnieje."
+    },
     "step": {
-      "confirm": {
+      "credentials": {
         "title": "Zaktualizuj poświadczenia Xiaomi S400",
-        "description": "Zatwierdź, a następnie użyj opcji Reconfigure w integracji, aby wpisać nowy bindkey i token."
+        "description": "Wpisz aktualny bindkey i opcjonalny token. Integracja zostanie przeładowana; sprawdź następny pomiar.",
+        "data": {
+          "bindkey": "Bindkey (32 znaki hex)",
+          "token": "Token logowania (24 znaki hex, opcjonalny)"
+        }
       }
     }
   }

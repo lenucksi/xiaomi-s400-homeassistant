@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
+import re
 import secrets
 import sys
 from datetime import UTC, datetime, timedelta
@@ -251,7 +253,6 @@ async def run(args: argparse.Namespace) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--address", help="BLE MAC; omit to discover by S400 PID")
     parser.add_argument(
         "--trace", type=Path, default=Path("captures/s400-v2-lab-cert.jsonl")
     )
@@ -266,6 +267,9 @@ def parse_args() -> argparse.Namespace:
         help="certificate payload bytes per frame (default: negotiated maximum)",
     )
     args = parser.parse_args()
+    args.address = os.environ.get("S400_BLE_ADDRESS", "").strip().upper()
+    if not re.fullmatch(r"[0-9A-F]{2}(?::[0-9A-F]{2}){5}", args.address):
+        parser.error("set S400_BLE_ADDRESS to a six-byte colon-separated BLE address")
     if not 1 <= args.certificate_chunk_size <= 240:
         parser.error("--certificate-chunk-size must be between 1 and 240")
     return args

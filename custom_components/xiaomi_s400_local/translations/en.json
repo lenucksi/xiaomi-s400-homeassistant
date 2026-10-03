@@ -28,7 +28,7 @@
           "token": "Login token (24 hex characters, optional)"
         },
         "data_description": {
-          "bindkey": "Extracted once from the Xiaomi Cloud Tokens Extractor. It decrypts the scale's advertisements.",
+          "bindkey": "Obtain this key from Xiaomi Cloud Tokens Extractor after pairing the scale. It decrypts the scale's advertisements.",
           "token": "Optional. Only needed for the active GATT stream. Leave empty for passive-only operation."
         }
       },
@@ -40,7 +40,7 @@
           "token": "Login token (24 hex characters, optional)"
         },
         "data_description": {
-          "bindkey": "Extracted once from the Xiaomi Cloud Tokens Extractor. It decrypts the scale's advertisements.",
+          "bindkey": "Obtain this key from Xiaomi Cloud Tokens Extractor after pairing the scale. It decrypts the scale's advertisements.",
           "token": "Optional. Only needed for the active GATT stream. Leave empty for passive-only operation."
         }
       },
@@ -86,14 +86,24 @@
   "issues": {
     "invalid_bindkey": {
       "title": "Xiaomi S400 credentials are invalid",
-      "description": "The advertisements from {address} can no longer be decrypted. Extract the bindkey again and update the integration."
+      "description": "Measurement advertisements from {address} repeatedly failed authentication. Re-enter the bindkey; if the scale was re-paired, obtain its new key first."
     }
   },
   "fix_flow": {
+    "error": {
+      "invalid_key": "Bindkey must be 32 hex characters and token, when supplied, 24 hex characters."
+    },
+    "abort": {
+      "entry_not_found": "The scale configuration no longer exists."
+    },
     "step": {
-      "confirm": {
+      "credentials": {
         "title": "Update the Xiaomi S400 credentials",
-        "description": "Select submit, then use Reconfigure on the integration to enter the new bindkey and token."
+        "description": "Enter the current bindkey and optional token. The scale will reload; confirm the next measurement works.",
+        "data": {
+          "bindkey": "Bindkey (32 hex characters)",
+          "token": "Login token (24 hex characters, optional)"
+        }
       }
     }
   }

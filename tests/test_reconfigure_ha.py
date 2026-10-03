@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import probatio
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import config_validation as cv
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.xiaomi_s400_local.const import DOMAIN
@@ -12,7 +14,7 @@ from custom_components.xiaomi_s400_local.const import DOMAIN
 async def test_reconfigure_prefills_and_updates_credentials(
     hass: HomeAssistant,
 ) -> None:
-    address = "04:AE:47:5C:FC:29"
+    address = "02:00:00:00:00:03"
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Xiaomi S400 FC:29",
@@ -30,6 +32,23 @@ async def test_reconfigure_prefills_and_updates_credentials(
         marker.schema: marker.default() for marker in result["data_schema"].schema
     }
     assert defaults == {"bindkey": "aa" * 16, "token": "bb" * 12}
+    assert probatio.to_field_list(
+        result["data_schema"], custom_serializer=cv.custom_serializer
+    ) == [
+        {
+            "type": "string",
+            "name": "bindkey",
+            "required": True,
+            "default": "aa" * 16,
+        },
+        {
+            "type": "string",
+            "name": "token",
+            "required": False,
+            "optional": True,
+            "default": "bb" * 12,
+        },
+    ]
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"bindkey": "cc" * 16, "token": "dd" * 12}

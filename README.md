@@ -3,14 +3,14 @@
 [![Validate](https://github.com/kbpk/xiaomi-s400-homeassistant/actions/workflows/validate.yml/badge.svg)](https://github.com/kbpk/xiaomi-s400-homeassistant/actions/workflows/validate.yml)
 [![HACS custom repository](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
 
-[Polska wersja](README.pl.md)
-
 Experimental HACS integration for the Xiaomi Body Composition Scale S400
 (`MJTZC01YM`, `yunmai.scales.ms103/ms104/ms107`). Data reception and key storage
 happen locally. The Home Assistant integration itself contains no Xiaomi Cloud
 client and does not ask for Xiaomi account credentials. A separate lab tool can
 request a one-time signature from the Xiaomi backend, which a factory-new S400
 with auth version 2 requires.
+
+Requires Home Assistant 2026.9.4 or newer.
 
 > [!WARNING]
 > Measurement reception in Home Assistant still needs further hardware testing.
@@ -79,7 +79,7 @@ paired — so it has to be read from your Xiaomi account:
 1. Add the scale to the **Xiaomi Home** app and weigh yourself once. This mints
    the bindkey.
 2. Run the [Xiaomi Cloud Tokens Extractor](https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor)
-  (`uv run python token_extractor.py`). Log in with the Xiaomi account: QR login,
+  using the extractor's current installation instructions. Log in with the Xiaomi account: QR login,
    e-mail/password, 2FA and captcha are supported interactively, so 2FA is not a
    blocker. Pick your region (e.g. `de` for Europe).
 3. Find the S400 in the output and copy:
@@ -116,6 +116,7 @@ or keys.
 On Raspberry Pi OS or Debian:
 
 ```bash
+export S400_BLE_ADDRESS='AA:BB:CC:DD:EE:FF'  # replace with your scale's address
 uv run --no-project --with-requirements requirements-lab.txt \
   tools/s400_diag.py --duration 60 --output captures/s400-gatt.jsonl
 ```
@@ -145,6 +146,9 @@ uv run --no-project --with-requirements "$repo\requirements-lab.txt" `
 
 The distribution name `Ubuntu` in the path may differ; `wsl -l -v` shows it.
 Files on Windows inherit the directory ACL instead of the Unix `0600` mode.
+Set `$env:S400_BLE_ADDRESS = "AA:BB:CC:DD:EE:FF"` in the same PowerShell
+session before running the diagnostic tool; replace the example with your scale's
+address.
 
 ## Standalone local pairing
 
@@ -155,6 +159,7 @@ supported.
 After a factory reset and waking the scale:
 
 ```bash
+export S400_BLE_ADDRESS='AA:BB:CC:DD:EE:FF'  # replace with your scale's address
 uv run --no-project --with-requirements requirements-lab.txt \
   tools/s400_pair.py \
   --output private/s400-secrets.json \
@@ -162,6 +167,8 @@ uv run --no-project --with-requirements requirements-lab.txt \
 ```
 
 On Windows, run the same file through `uv` and the WinRT backend:
+Set `$env:S400_BLE_ADDRESS = "AA:BB:CC:DD:EE:FF"` first, using your own
+scale's address.
 
 ```powershell
 $repo = "\\wsl.localhost\Ubuntu\home\kbpk\xiaomi\xiaomi-s400-homeassistant"
@@ -204,6 +211,11 @@ file:
 $repo = "\\wsl.localhost\Ubuntu\home\kbpk\xiaomi\xiaomi-s400-homeassistant"
 & "$repo\tools\windows\run_s400_xiaomi_pair.ps1" -Region de
 ```
+
+Before starting this launcher, set `$env:S400_BLE_ADDRESS` in the same
+PowerShell session to your scale's address (for example,
+`$env:S400_BLE_ADDRESS = "AA:BB:CC:DD:EE:FF"`). The tools read it directly from
+the process environment; the address is not passed in command arguments.
 
 The region must match the region of the Mi Home account. For an account used in
 Poland the usual value is `de`; `cn`, `us`, `ru`, `tw`, `sg`, `in` and `i2` are

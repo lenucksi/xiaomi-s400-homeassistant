@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
+import re
 import sys
 from importlib import import_module
 from pathlib import Path
@@ -42,16 +44,13 @@ async def run(args: argparse.Namespace) -> None:
         trace_path=args.trace,
     )
     core.save_credentials(args.output, result)
-    print(f"Pairing and post-pair login verified for {result.mac}.")
+    print("Pairing and post-pair login verified for the target scale.")
     print(f"Credentials saved with mode 0600: {args.output}")
     print(f"Protocol trace (contains no derived secrets): {args.trace}")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--address", help="BLE MAC; omit to discover by S400 product id"
-    )
     parser.add_argument("--output", type=Path, default=Path("s400-secrets.json"))
     parser.add_argument("--trace", type=Path, default=Path("s400-pair-trace.jsonl"))
     parser.add_argument("--protocol-timeout", type=float, default=8.0)
@@ -79,6 +78,9 @@ def parse_args() -> argparse.Namespace:
         help="advanced: exactly 20 ASCII bytes; normally a local DID is generated",
     )
     args = parser.parse_args()
+    args.address = os.environ.get("S400_BLE_ADDRESS", "").strip().upper()
+    if not re.fullmatch(r"[0-9A-F]{2}(?::[0-9A-F]{2}){5}", args.address):
+        parser.error("set S400_BLE_ADDRESS to a six-byte colon-separated BLE address")
     if args.did and len(args.did.encode("ascii")) != 20:
         parser.error("--did must encode to exactly 20 ASCII bytes")
     if args.stage_delay < 0:

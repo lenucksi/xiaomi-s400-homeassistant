@@ -38,7 +38,7 @@ Analiza:
 ```bash
 tshark -r captures/s400.btsnoop -Y 'btatt || btle' -V > captures/s400-att.txt
 tshark -r captures/s400.btsnoop -Y 'btatt.opcode == 0x1b || btatt.opcode == 0x12 || btatt.opcode == 0x52'
-rg -i 'fe95|00000010|00000019|0000001[abc]|AA:BB:CC:DD:EE:FF' captures/s400-btmon.txt
+rg -i 'fe95|00000010|00000019|0000001[abc]|02:00:00:00:00:05' captures/s400-btmon.txt
 ```
 
 Po ustaleniu ATT handle charakterystyk `0x0010` i `0x0019` można ograniczyć

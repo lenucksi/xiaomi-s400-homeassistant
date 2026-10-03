@@ -22,6 +22,9 @@ Remove-Item $errorStatusPath -Force -ErrorAction SilentlyContinue
 } | ConvertTo-Json | Set-Content -Encoding UTF8 $statusPath
 
 try {
+    if (-not $env:S400_BLE_ADDRESS) {
+        throw "Set S400_BLE_ADDRESS in this PowerShell session before starting pairing."
+    }
     try {
         Invoke-RestMethod "$cdpUrl/json/version" -TimeoutSec 2 | Out-Null
     } catch {

@@ -12,10 +12,10 @@ dependencies = [
 [dependency-groups]
 dev = [
   "pytest>=8.3,<10",
-  "pytest-homeassistant-custom-component==0.13.366",
+  "pytest-homeassistant-custom-component==0.13.367",
   "pytest-cov>=6,<8",
   "ruff>=0.12,<1",
-  # Pin the Bluetooth stack to the versions Home Assistant 2026.9.3 requires.
+  # Pin the Bluetooth stack to the versions Home Assistant 2026.9.4 requires.
   # Custom integrations declare no requirements; the test env has to provide them.
   "bleak==3.0.2",
   "bleak-retry-connector==4.7.0",

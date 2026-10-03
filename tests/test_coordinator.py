@@ -14,9 +14,9 @@ from custom_components.xiaomi_s400_local.const import DOMAIN, MIBEACON_UUID
 from custom_components.xiaomi_s400_local.coordinator import S400Coordinator
 from custom_components.xiaomi_s400_local.protocol import CMTP
 
-ADDRESS = "04:AE:47:5C:FC:29"
+ADDRESS = "02:00:00:00:00:03"
 BINDKEY = bytes.fromhex("00112233445566778899aabbccddeeff")
-_MAC = bytes.fromhex("04ae475cfc29")
+_MAC = bytes.fromhex("020000000003")
 _EMBEDDED_MAC = _MAC[::-1]
 
 

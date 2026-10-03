@@ -8,7 +8,7 @@ rules:
     comment: The scale is a passive Bluetooth push device; there is no polling.
   brands:
     status: exempt
-    comment: Custom (HACS) integration; brand assets cannot be added to home-assistant/brands.
+    comment: No verified product artwork is available; generic artwork was removed.
   common-modules: done
   config-flow: done
   config-flow-test-coverage:

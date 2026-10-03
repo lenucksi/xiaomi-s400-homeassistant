@@ -81,7 +81,7 @@ def test_v2_guard_stops_before_key_exchange(monkeypatch) -> None:
     with pytest.raises(pairing.RegistrationUnsupported, match="auth version 2"):
         asyncio.run(
             pairing.pair_device(
-                ble_device=SimpleNamespace(address="00:00:00:00:00:00"),
+                ble_device=SimpleNamespace(address="02:00:00:00:00:01"),
                 official_init=False,
             )
         )
