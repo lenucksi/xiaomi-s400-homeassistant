@@ -150,7 +150,6 @@ class S400Coordinator:
             is_fixable=True,
             severity=ir.IssueSeverity.WARNING,
             translation_key="invalid_bindkey",
-            translation_placeholders={"address": self.address},
             data={"entry_id": self.entry_id},
         )
 

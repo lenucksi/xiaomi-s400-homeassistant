@@ -100,24 +100,23 @@
   "issues": {
     "invalid_bindkey": {
       "title": "Xiaomi S400 credentials are invalid",
-      "description": "Measurement advertisements from {address} repeatedly failed authentication. Re-enter the bindkey; if the scale was re-paired, obtain its new key first."
-    }
-  },
-  "fix_flow": {
-    "error": {
-      "invalid_key": "Bindkey must be 32 hex characters and token, when supplied, 24 hex characters.",
-      "reload_failed": "Credentials were saved, but the integration could not be reloaded. Check its logs and reload it manually."
-    },
-    "abort": {
-      "entry_not_found": "The scale configuration no longer exists."
-    },
-    "step": {
-      "credentials": {
-        "title": "Update the Xiaomi S400 credentials",
-        "description": "Enter the current bindkey and optional token. The scale will reload; confirm the next measurement works.",
-        "data": {
-          "bindkey": "Bindkey (32 hex characters)",
-          "token": "Login token (24 hex characters, optional)"
+      "fix_flow": {
+        "error": {
+          "invalid_key": "Bindkey must be 32 hex characters and token, when supplied, 24 hex characters.",
+          "reload_failed": "Credentials were saved, but the integration could not be reloaded. Check its logs and reload it manually."
+        },
+        "abort": {
+          "entry_not_found": "The scale configuration no longer exists."
+        },
+        "step": {
+          "credentials": {
+            "title": "Update the Xiaomi S400 credentials",
+            "description": "Repeated measurement advertisements failed authentication. Enter the current bindkey and optional token; if the scale was re-paired, obtain its new key first. Confirm the next measurement after the integration reloads.",
+            "data": {
+              "bindkey": "Bindkey (32 hex characters)",
+              "token": "Login token (24 hex characters, optional)"
+            }
+          }
         }
       }
     }

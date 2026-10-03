@@ -100,24 +100,23 @@
   "issues": {
     "invalid_bindkey": {
       "title": "Nieprawidłowe poświadczenia Xiaomi S400",
-      "description": "Reklamy z pomiarami urządzenia {address} wielokrotnie nie przeszły uwierzytelnienia. Wpisz bindkey ponownie; jeśli ponownie sparowano wagę, najpierw uzyskaj nowy klucz."
-    }
-  },
-  "fix_flow": {
-    "error": {
-      "invalid_key": "Bindkey musi mieć 32 znaki hex, a opcjonalny token 24 znaki hex.",
-      "reload_failed": "Poświadczenia zapisano, ale nie udało się przeładować integracji. Sprawdź jej dziennik i przeładuj ją ręcznie."
-    },
-    "abort": {
-      "entry_not_found": "Konfiguracja wagi już nie istnieje."
-    },
-    "step": {
-      "credentials": {
-        "title": "Zaktualizuj poświadczenia Xiaomi S400",
-        "description": "Wpisz aktualny bindkey i opcjonalny token. Integracja zostanie przeładowana; sprawdź następny pomiar.",
-        "data": {
-          "bindkey": "Bindkey (32 znaki hex)",
-          "token": "Token logowania (24 znaki hex, opcjonalny)"
+      "fix_flow": {
+        "error": {
+          "invalid_key": "Bindkey musi mieć 32 znaki hex, a opcjonalny token 24 znaki hex.",
+          "reload_failed": "Poświadczenia zapisano, ale nie udało się przeładować integracji. Sprawdź jej dziennik i przeładuj ją ręcznie."
+        },
+        "abort": {
+          "entry_not_found": "Konfiguracja wagi już nie istnieje."
+        },
+        "step": {
+          "credentials": {
+            "title": "Zaktualizuj poświadczenia Xiaomi S400",
+            "description": "Kolejne reklamy z pomiarami nie przeszły uwierzytelnienia. Wpisz aktualny bindkey i opcjonalny token; jeśli ponownie sparowano wagę, najpierw uzyskaj nowy klucz. Po przeładowaniu integracji sprawdź następny pomiar.",
+            "data": {
+              "bindkey": "Bindkey (32 znaki hex)",
+              "token": "Token logowania (24 znaki hex, opcjonalny)"
+            }
+          }
         }
       }
     }
