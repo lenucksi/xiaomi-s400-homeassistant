@@ -43,6 +43,11 @@ class _CountTrace:
             self.notifications[str(values["uuid"])] += 1
 
 
+def _measurement_result(fe95_count: int, gatt_count: int = 0) -> int:
+    """Fail verification unless at least one measurement was decoded."""
+    return 0 if fe95_count or gatt_count else 1
+
+
 async def run(args: argparse.Namespace) -> int:
     load_core()
     active = import_module("s400_verify_core.active")
@@ -108,7 +113,7 @@ async def run(args: argparse.Namespace) -> int:
         f"errors={dict(advertisement_errors)}"
     )
     if args.scan_only:
-        return 0 if measurements else 1
+        return _measurement_result(measurements)
     if found is None:
         print("Scale not seen. Wake it and retry.")
         return 1
@@ -164,7 +169,7 @@ async def run(args: argparse.Namespace) -> int:
             f"{complete_frames} complete frames, {rejected_frames} rejected frames, "
             f"{decoded_count} decoded measurements"
         )
-    return 0
+    return _measurement_result(measurements, decoded_count)
 
 
 def parse_args() -> argparse.Namespace:
